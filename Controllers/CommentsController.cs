@@ -7,60 +7,81 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BlogProject.Data;
 using BlogProject.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+using System.Data;
 
 namespace BlogProject.Controllers
 {
     public class CommentsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<BlogUser> _userManager;
 
-        public CommentsController(ApplicationDbContext context)
+        public CommentsController(ApplicationDbContext context, UserManager<BlogUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: Comments
-        public async Task<IActionResult> OrigionalIndex()
+
+        public async Task<IActionResult> Index()
         {
-            var origionalComments = await _context.Comments.ToListAsync();
-            return View("Index", origionalComments );
+            var allComments = await _context.Comments.ToListAsync();
+            return View("Index", allComments);
         }
 
-        public async Task<IActionResult> ModeratedIndex()
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Moderate(int id, [Bind("Id,Body,ModeratedBody,ModerationType")] Comment comment)
         {
-            var origionalComments = await _context.Comments.Where(c => c.Moderated !=null).ToListAsync();
-            return View("Index", origionalComments);
+            if (id != comment.Id)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                var newComment = await _context.Comments.Include(c => c.Post).FirstOrDefaultAsync(c => c.Id == comment.Id);
+
+                try
+                {
+                    newComment.ModeratedBody = comment.ModeratedBody;
+                    newComment.ModerationType = comment.ModerationType;
+
+                    newComment.Moderated = DateTime.UtcNow;
+                    newComment.ModeratorId = _userManager.GetUserId(User);
+
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!CommentExists(comment.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction("Details", "Posts", new { slug = newComment.Post.Slug }, "commentSection");
+            }
+            return View(comment);
         }
-
-        //public async Task<IActionResult> ModeratedIndex()
-        //{
-          //Use sort delete bool          
-        //}
-
-        //public async Task<IActionResult> Index()
-        //{
-        //var applicationDbContext = _context.Comments.Include(c => c.BlogUser).Include(c => c.Moderator).Include(c => c.Post);
-        //return View(await applicationDbContext.ToListAsync());
-        //}
-
-        // GET: Comments/Create
-        //public IActionResult Create()
-        //{
-            //ViewData["BlogUserId"] = new SelectList(_context.Users, "Id", "Id");
-            //ViewData["ModeratorId"] = new SelectList(_context.Users, "Id", "Id");
-            //ViewData["PostId"] = new SelectList(_context.Posts, "Id", "Abstract");
-            //return View();
-        //}
 
         // POST: Comments/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,PostId,BlogUserId,ModeratorId,Body,Created,Updated,Moderated,Deleted,ModeratedBody,ModerationType")] Comment comment)
+        public async Task<IActionResult> Create([Bind("PostId,Body")] Comment comment)
         {
             if (ModelState.IsValid)
             {
+                comment.BlogUserId = _userManager.GetUserId(User);
+                comment.Created = DateTime.UtcNow;
                 _context.Add(comment);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -93,7 +114,7 @@ namespace BlogProject.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,PostId,BlogUserId,ModeratorId,Body,Created,Updated,Moderated,Deleted,ModeratedBody,ModerationType")] Comment comment)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Body")] Comment comment)
         {
             if (id != comment.Id)
             {
@@ -102,9 +123,12 @@ namespace BlogProject.Controllers
 
             if (ModelState.IsValid)
             {
+                var newComment = await _context.Comments.Include(c => c.Post).FirstOrDefaultAsync(c => c.Id == comment.Id);
                 try
                 {
-                    _context.Update(comment);
+                    newComment.Body = comment.Body;
+                    newComment.Updated = DateTime.UtcNow;
+
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -118,11 +142,8 @@ namespace BlogProject.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Details", "Posts", new { slug = newComment.Post.Slug }, "commentSection");
             }
-            ViewData["BlogUserId"] = new SelectList(_context.Users, "Id", "Id", comment.BlogUserId);
-            ViewData["ModeratorId"] = new SelectList(_context.Users, "Id", "Id", comment.ModeratorId);
-            ViewData["PostId"] = new SelectList(_context.Posts, "Id", "Abstract", comment.PostId);
             return View(comment);
         }
 
@@ -150,25 +171,18 @@ namespace BlogProject.Controllers
         // POST: Comments/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id, string slug)
         {
-            if (_context.Comments == null)
-            {
-                return Problem("Entity set 'ApplicationDbContext.Comments'  is null.");
-            }
             var comment = await _context.Comments.FindAsync(id);
-            if (comment != null)
-            {
-                _context.Comments.Remove(comment);
-            }
-            
+            _context.Comments.Remove(comment);
+
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Details", "Posts",new {slug}, "commentSection");
         }
 
         private bool CommentExists(int id)
         {
-          return (_context.Comments?.Any(e => e.Id == id)).GetValueOrDefault();
+            return _context.Comments.Any(e => e.Id == id);
         }
     }
 }

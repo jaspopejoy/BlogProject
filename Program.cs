@@ -30,6 +30,7 @@ builder.Services.AddRazorPages();
 
 //Register cutom DataService class
 builder.Services.AddScoped<DataService>();
+builder.Services.AddScoped<BlogSearchService>();
 
 //Register a preconfigured instance of MailSettings class
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
@@ -69,6 +70,12 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
+
+// Custom map controller route
+app.MapControllerRoute(
+    name: "SlugRoute",
+    pattern: "BlogPosts/UrlFriendly/{slug}",
+    defaults: new { controller = "Posts", action = "Details" });
 
 app.MapControllerRoute(
     name: "default",
