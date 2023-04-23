@@ -10796,18 +10796,3 @@ header.masthead .post-heading .meta a {
     font-size: 2.25rem;
   }
 }
-
-/*Custom CSS*/
-button.btn-sm, a.btn-sm {
-    line-height: 2;
-    border-radius: 10px;
-}
-
-option {
-    font-weight: bolder;
-}
-
-div.swal2-container.swal2-center.swal2-backdrop-show > div {
-    outline: 4px solid black;
-    border: 2px solid #ff993b;
-}
