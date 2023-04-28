@@ -13,36 +13,29 @@
         <div class="col-9 border-right">
             @Html.Raw(Model.Post.Content)
         </div>
-        <div class="col-3 text-center font-weight-bold h6">
-            <div class="card">
-                <img class="card-img-top" src="/img/tags.jpg" alt="Tags...">
-                <div class="card-body">
-                    <h4 class="card-title">SYSTEM TAGS</h4>
-                    <div class="tagView">
-                        @foreach (var tag in Model.Tags)
-                        {
-                            <a asp-action="TagIndex" asp-route-tag="@tag" class="mb-1 btn btn-sm btn-warning btn-outline-dark">#@tag</a>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
-
 </article>
 
 <article>
     <hr />
-    <h3 class="text-center font-weight-bold">Tags</h3>
-    <div class="col text-center">
-        @foreach (var tag in Model.Post.Tags.ToList())
-        {
-            <a asp-action="TagIndex" asp-route-tag="@tag.Text.ToLower()" class="mb-1 btn btn-sm btn-warning btn-outline-dark">#@tag.Text</a>
-        }
+
+    <div class="row">
+        <div class="col">
+            <h3 class="text-center font-weight-bold mb-4">Tags</h3>
+
+            <div class="col text-center">
+                @foreach (var tag in Model.Post.Tags.ToList())
+                {
+
+                    <span class="border border-secondary rounded-pill m-2 p-2"> #@tag.Text </span>
+
+                }
+            </div>
+        </div>
     </div>
+
     <hr />
 </article>
-
 
 <div>
     @if (User.Identity.IsAuthenticated)
@@ -65,10 +58,6 @@
             Login to add comments
         </a>
     }
-
-    <br />
-    <hr class="card-hr" />
-    <br />
 
     <a id="commentSection" class="btn btn-sm btn-dark btn-block mb-2">@Model.Post.Comments.Count COMMENT(S)</a>
 

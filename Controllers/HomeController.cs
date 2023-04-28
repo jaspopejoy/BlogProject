@@ -2,9 +2,13 @@
 using BlogProject.Models;
 using BlogProject.Services;
 using BlogProject.ViewModels;
+using Humanizer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Scaffolding;
+using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
+using System.IO;
 using X.PagedList;
 
 namespace BlogProject.Controllers
@@ -22,19 +26,21 @@ namespace BlogProject.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index(int? page)
+        public async Task<IActionResult> Index(int? page, DateTime? created)
         {
+            created = DateTime.UtcNow;
+
             var pageNumber = page ?? 1;
             var pageSize = 5;
-
-            //var blogs = _context.Blogs.Where(
-            //    b => b.Posts.Any(p => p.ReadyStatus == Enums.ReadyStatus.ProductionReady))
-            //    .OrderByDescending(b => b.Created).ToPagedListAsync(pageNumber, pageSize);
 
             var blogs = _context.Blogs
               .Include(b => b.BlogUser)
               .OrderByDescending(b => b.Created)
               .ToPagedListAsync(pageNumber, pageSize);
+
+            ViewData["HeaderImage"] = "/img/home-bg.jpg";
+            ViewData["MainText"] = "Welcome to Blogly";
+            ViewData["SubText"] = "A simple blog application";
 
             return View(await blogs);
 

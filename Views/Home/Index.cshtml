@@ -13,52 +13,46 @@
 
 <div class="row">
 
-    @foreach(var blog in Model)
+    @foreach (var blog in Model)
     {
-        <div class="col-sm-12 col-md-6 col-lg-4 mt-2">
-            <div class="card border-dark">
-                <img class="card-img-top" src="@_imageService.DecodeImage(blog.ImageData, blog.ContentType)"/>
-                <div class="card-body text-center">
+        <div class="col-sm-12 col-md-6 mt-2">
+            <!-- Blog post-->
+            <div class="card mb-4">
+                <img class="card-img-top" src="@_imageService.DecodeImage(blog.ImageData, blog.ContentType)" />
+                <div class="card-body">
+                    <span class="small">
+                        <span class="font-weight-bolder">Created </span> : @blog.Created.ToString("MMM dd, yyyy")
+                    </span>
+                    <h2 class="card-title h4">@blog.Name</h2>
+                    <p class="card-text">@blog.Description</p>
 
-                    <div class="bg-warning">
-                        <hr class="card-hr"/>
-                        <h5 class="card-title">@blog.Name</h5>
-                        <hr class="card-hr"/>
-                    </div>
-                    <div>
-                        <p class="card-text cftooltip"
-                           data-toggle="tooltip"
-                           data-plavement="top"
-                           title=""
-                           data-origional-title="@blog.Description">@blog.Description</p>
-                    </div>
-
-                    <br/>
-
-                    <div class="text-center">
-                        <a class="btn btn-dark btn-sm btn-block mb-2" asp-action="BlogPostIndex" asp-controller="Posts" asp-route-id="@blog.Id">Read Posts</a>
-                    </div>
-
-                    @if (User.IsInRole(BlogRole.Administrator.ToString()))
-                    {
-                        <div class="text-center">
-                            <a class="btn btn-dark btn-sm btn-block mb-2" asp-action="Create" asp-controller="Posts" asp-route-id="@blog.Id">Create Post</a>
+                    <div class="row">
+                        <div class="col-4">
+                            <a class="btn btn-primary btn-block btn-dark" asp-action="BlogPostIndex" asp-controller="Posts" asp-route-id="@blog.Id">Read more →</a>
                         </div>
-                    }
 
-                    @if (User.IsInRole(BlogRole.Administrator.ToString()))
-                    {
-                        <div class="text-center">
-                            <a class="btn btn-danger btn-sm btn-block" asp-action="Edit" asp-controller="Blogs" asp-route-id="@blog.Id">Edit Blog</a>
-                        </div>
-                    }
+                        @if (User.IsInRole(BlogRole.Administrator.ToString()))
+                        {
+                            <div class="col-4">
+                                <a class="btn btn-primary btn-block btn-dark" asp-action="Create" asp-controller="Posts" asp-route-id="@blog.Id">Create Post</a>
+                            </div>
+                        }
+
+                        @if (User.IsInRole(BlogRole.Administrator.ToString()))
+                        {
+                            <div class="col-4">
+                                <a class="btn btn-primary btn-block btn-dark" asp-action="Edit" asp-controller="Blogs" asp-route-id="@blog.Id">Edit Blog</a>
+                            </div>
+                        }
+                    </div>
+
                 </div>
             </div>
         </div>
     }
 </div>
 
-<hr/>
+<hr />
 
 <div class="row">
     <div class="col h3">
@@ -70,31 +64,26 @@
 <div class="row">
     <div class="col">
         @Html.PagedListPager(Model, page => Url.Action("Index", new{page = page}),
-            new PagedListRenderOptions
-            {
-                LiElementClasses = new string[] {"page-item"},
-                PageClasses = new string[]{"page-link"}
-            })
+        new PagedListRenderOptions
+        {
+        LiElementClasses = new string[] {"page-item"},
+        PageClasses = new string[]{"page-link"}
+        })
     </div>
 </div>
 
 @section Scripts {
     <script>
         var swalMsg = '@TempData["SweetAlert"]'
-        if (swalMsg !=""){
+        if (swalMsg != "") {
             Swal.fire({
                 icon: 'success',
                 title: swalMsg,
                 timer: 2500
             })
         }
-
-        $(document).ready(function(){
-            $("p").tooltip();
-        })
-
     </script>
-}
+    }
 
 
 

@@ -20,7 +20,7 @@ namespace BlogProject.Models
 
         [DataType(DataType.Date)]
         [Display(Name = "Date Created")]
-        public DateTime? Created { get; set; }
+        public DateTime Created { get; set; }
 
         [DataType(DataType.Date)]
         [Display(Name = "Date Updated")]
